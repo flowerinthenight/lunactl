@@ -18,8 +18,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to server: %v", err)
 	}
+
 	defer conn.Close()
 	log.Println("Successfully connected.")
+
+	_, err = conn.Write([]byte("Hello from Go client"))
+	if err != nil {
+		log.Fatalf("Failed to send greeting: %v", err)
+	}
 
 	// 2. Create an Arrow IPC stream reader from the connection
 	// The reader will read from the 'conn' (which implements io.Reader).
@@ -37,7 +43,7 @@ func main() {
 	for r.Next() {
 		func() {
 			// Get the current record (RecordBatch)
-			rec := r.Record()
+			rec := r.RecordBatch()
 
 			// It's important to release the record's memory when you're done.
 			// A defer here would wait until the function exits, so we explicitly
