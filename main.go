@@ -22,7 +22,7 @@ func main() {
 	defer conn.Close()
 	log.Println("Successfully connected.")
 
-	_, err = conn.Write([]byte("Hello from Go client"))
+	_, err = conn.Write([]byte("+20\r\nHello from Go client-ex\r\n"))
 	if err != nil {
 		log.Fatalf("Failed to send greeting: %v", err)
 	}
