@@ -176,6 +176,7 @@ types = {
   'costcategories':'VARCHAR'
 });`,
 		`q:DESCRIBE tmpcur;`,
+		`q:SELECT uuid, date, payer FROM tmpcur;`,
 	}
 
 	for _, payload := range payloads {
