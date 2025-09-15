@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	const addr = "127.0.0.1:9090"
+	const addr = "127.0.0.1:7688"
 
 	payloads := []string{
 		`x:CREATE OR REPLACE SECRET (
