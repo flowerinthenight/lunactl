@@ -14,12 +14,12 @@ func main() {
 	const addr = "127.0.0.1:9090"
 
 	payloads := []string{
-		`CREATE OR REPLACE SECRET (
+		`x:CREATE OR REPLACE SECRET (
   TYPE gcs,
   KEY_ID '` + os.Getenv("LUNA_GCS_HMAC_KEY") + `',
   SECRET '` + os.Getenv("LUNA_GCS_HMAC_SECRET") + `'
 );`,
-		`create table tmpcur as from
+		`x:CREATE TABLE tmpcur AS FROM
 read_csv('gs://awscur/992382443124_2025-08*.csv',
 header = true,
 union_by_name = true,
@@ -175,6 +175,7 @@ types = {
   'tags':'VARCHAR',
   'costcategories':'VARCHAR'
 });`,
+		`q:DESCRIBE tmpcur;`,
 	}
 
 	for _, payload := range payloads {
