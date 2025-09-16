@@ -9,4 +9,7 @@ $ ./lunactl -p "$(cat 2-test-load-gcs-csv.txt)" -type 'x:'
 
 # Describe the created table:
 $ ./lunactl -p 'DESCRIBE tmpcur;'
+
+# Sample query:
+$ ./lunactl -p 'SELECT uuid from tmpcur;'
 ```
