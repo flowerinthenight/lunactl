@@ -6,24 +6,22 @@ import (
 	"io"
 	"log/slog"
 	"net"
-	"os"
 
 	"github.com/apache/arrow-go/v18/arrow/ipc"
 )
 
 var (
-	flagPrefix = flag.String("prefix", "$", "Request prefix")
-	flagType   = flag.String("type", "q:", "Command type")
+	flagPrefix  = flag.String("prefix", "$", "Request prefix")
+	flagType    = flag.String("type", "q:", "Command type")
+	flagPayload = flag.String("p", "SHOW tables;", "Main payload")
 )
 
 func main() {
 	flag.Parse()
 	const addr = "127.0.0.1:7688"
 
-	args := os.Args
-	_ = args
-	if len(args) < 2 {
-		slog.Info("missing argument")
+	if *flagPayload == "" {
+		slog.Info("missing payload")
 		return
 	}
 
@@ -37,7 +35,7 @@ func main() {
 	defer conn.Close()
 	slog.Info("connected")
 
-	payload := fmt.Sprintf("%s%d\r\n%s%s\r\n", *flagPrefix, len(args[1])+len(*flagType), *flagType, args[1])
+	payload := fmt.Sprintf("%s%d\r\n%s%s\r\n", *flagPrefix, len(*flagPayload)+len(*flagType), *flagType, *flagPayload)
 	slog.Info("send:", "payload", payload)
 
 	_, err = conn.Write([]byte(payload))

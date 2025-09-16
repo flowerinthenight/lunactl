@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+echo "CREATE OR REPLACE SECRET (TYPE gcs, KEY_ID '${LUNA_GCS_HMAC_KEY}', SECRET '${LUNA_GCS_HMAC_SECRET}');"

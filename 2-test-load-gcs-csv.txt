@@ -1,27 +1,4 @@
-package main
-
-import (
-	"fmt"
-	"io"
-	"log"
-	"net"
-	"os"
-
-	"github.com/apache/arrow-go/v18/arrow/ipc"
-)
-
-func main() {
-	const addr = "127.0.0.1:7688"
-
-	// 992382443124_2025-08 - mid size
-	// 987368816909_2025-08 - smaller size
-	payloads := []string{
-		`x:CREATE OR REPLACE SECRET (
-  TYPE gcs,
-  KEY_ID '` + os.Getenv("LUNA_GCS_HMAC_KEY") + `',
-  SECRET '` + os.Getenv("LUNA_GCS_HMAC_SECRET") + `'
-);`,
-		`x:CREATE TABLE tmpcur AS FROM
+CREATE TABLE tmpcur AS FROM
 read_csv('gs://awscur/987368816909_2025-08*.csv',
 header = true,
 union_by_name = true,
@@ -140,55 +117,4 @@ types = {
   'savingsPlan/RecurringCommitmentForBillingPeriod':'DOUBLE',
   'tags':'VARCHAR',
   'costcategories':'VARCHAR'
-});`,
-		`q:DESCRIBE tmpcur;`,
-		`q:SELECT uuid, date, payer FROM tmpcur;`,
-	}
-
-	for _, payload := range payloads {
-		func() {
-			log.Printf("Go Arrow client connecting to %s", addr)
-			conn, err := net.Dial("tcp", addr)
-			if err != nil {
-				log.Fatalf("Failed to connect to server: %v", err)
-			}
-
-			defer conn.Close()
-			log.Println("Successfully connected.")
-
-			fpayload := fmt.Sprintf("$%d\r\n%s\r\n", len(payload), payload)
-			_, err = conn.Write([]byte(fpayload))
-			if err != nil {
-				log.Fatalf("Failed to send greeting: %v", err)
-			}
-
-			r, err := ipc.NewReader(conn)
-			if err != nil {
-				log.Printf("Failed to create Arrow reader: %v", err)
-				return
-			}
-
-			defer r.Release()
-			log.Println("Received schema:", r.Schema())
-
-			var recordCount int
-			for r.Next() {
-				func() {
-					rec := r.RecordBatch()
-					defer rec.Release()
-
-					recordCount++
-					log.Printf("--- Reading Record Batch #%d ---", recordCount)
-					log.Printf("Rows: %d, Columns: %d", rec.NumRows(), rec.NumCols())
-					fmt.Println(rec)
-				}()
-			}
-
-			if err := r.Err(); err != nil && err != io.EOF {
-				log.Fatalf("Error reading records: %v", err)
-			}
-
-			log.Printf("Finished reading %d record batches from stream.", recordCount)
-		}()
-	}
-}
+});
