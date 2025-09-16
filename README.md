@@ -8,6 +8,8 @@ Install via Homebrew:
 $ brew install flowerinthenight/tap/lunactl
 ```
 
+Sample usage:
+
 ```sh
 # Setup access to GCS:
 $ PAYLOAD=$(sh -c ./1-test-gcs-secret.sh); ./lunactl -p $PAYLOAD -type 'x:'
