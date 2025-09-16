@@ -1,4 +1,14 @@
+[![main](https://github.com/flowerinthenight/lunactl/actions/workflows/main.yml/badge.svg)](https://github.com/flowerinthenight/lunactl/actions/workflows/main.yml)
+
 Test cmdline for [luna](https://github.com/flowerinthenight/luna/).
+
+Install via Homebrew:
+
+```sh
+$ brew install flowerinthenight/tap/lunactl
+```
+
+Sample usage:
 
 ```sh
 # Setup access to GCS:
