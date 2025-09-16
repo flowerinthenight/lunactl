@@ -6,4 +6,7 @@ $ PAYLOAD=$(sh -c ./1-test-gcs-secret.sh); ./lunactl -p $PAYLOAD -type 'x:'
 
 # Load CSV files from GCS:
 $ ./lunactl -p "$(cat 2-test-load-gcs-csv.txt)" -type 'x:'
+
+# Describe the created table:
+$ ./lunactl -p 'DESCRIBE tmpcur;'
 ```
