@@ -2,6 +2,12 @@
 
 Test cmdline for [luna](https://github.com/flowerinthenight/luna/).
 
+Install via Homebrew:
+
+```sh
+$ brew install flowerinthenight/tap/lunactl
+```
+
 ```sh
 # Setup access to GCS:
 $ PAYLOAD=$(sh -c ./1-test-gcs-secret.sh); ./lunactl -p $PAYLOAD -type 'x:'
