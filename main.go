@@ -11,22 +11,21 @@ import (
 )
 
 var (
-	flagPrefix  = flag.String("prefix", "$", "Request prefix")
-	flagType    = flag.String("type", "q:", "Command type")
-	flagPayload = flag.String("p", "SHOW tables;", "Main payload")
+	flagHostPort = flag.String("hp", "127.0.0.1:7688", "Luna's host:port")
+	flagPrefix   = flag.String("prefix", "$", "Request prefix")
+	flagType     = flag.String("type", "q:", "Command type")
+	flagPayload  = flag.String("p", "SHOW tables;", "Main payload")
 )
 
 func main() {
 	flag.Parse()
-	const addr = "127.0.0.1:7688"
-
 	if *flagPayload == "" {
 		slog.Info("missing payload")
 		return
 	}
 
-	slog.Info("connecting:", "addr", addr)
-	conn, err := net.Dial("tcp", addr)
+	slog.Info("connecting:", "addr", *flagHostPort)
+	conn, err := net.Dial("tcp", *flagHostPort)
 	if err != nil {
 		slog.Error("Dial failed:", "err", err)
 		return
