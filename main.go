@@ -1,194 +1,78 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 
 	"github.com/apache/arrow-go/v18/arrow/ipc"
 )
 
+var (
+	flagPrefix = flag.String("prefix", "$", "Request prefix")
+	flagType   = flag.String("type", "q:", "Command type")
+)
+
 func main() {
+	flag.Parse()
 	const addr = "127.0.0.1:7688"
 
-	// 992382443124_2025-08 - mid size
-	// 987368816909_2025-08 - smaller size
-	payloads := []string{
-		`x:CREATE OR REPLACE SECRET (
-  TYPE gcs,
-  KEY_ID '` + os.Getenv("LUNA_GCS_HMAC_KEY") + `',
-  SECRET '` + os.Getenv("LUNA_GCS_HMAC_SECRET") + `'
-);`,
-		`x:CREATE TABLE tmpcur AS FROM
-read_csv('gs://awscur/987368816909_2025-08*.csv',
-header = true,
-union_by_name = true,
-files_to_sniff = -1,
-types = {
-  'uuid':'VARCHAR',
-  'date':'DATE',
-  'payer':'VARCHAR',
-  'pricing/LeaseContractLength':'VARCHAR',
-  'pricing/OfferingClass':'VARCHAR',
-  'pricing/PurchaseOption':'VARCHAR',
-  'reservation/AvailabilityZone':'VARCHAR',
-  'reservation/ReservationARN':'VARCHAR',
-  'savingsPlan/Region':'VARCHAR',
-  'savingsPlan/PaymentOption':'VARCHAR',
-  'savingsPlan/EndTime':'VARCHAR',
-  'savingsPlan/InstanceTypeFamily':'VARCHAR',
-  'savingsPlan/PurchaseTerm':'VARCHAR',
-  'savingsPlan/OfferingType':'VARCHAR',
-  'savingsPlan/StartTime':'VARCHAR',
-  'identity/LineItemId':'VARCHAR',
-  'identity/TimeInterval':'VARCHAR',
-  'bill/InvoiceId':'VARCHAR',
-  'bill/InvoicingEntity':'VARCHAR',
-  'bill/BillingEntity':'VARCHAR',
-  'bill/BillType':'VARCHAR',
-  'bill/PayerAccountId':'VARCHAR',
-  'bill/BillingPeriodStartDate':'TIMESTAMP',
-  'bill/BillingPeriodEndDate':'TIMESTAMP',
-  'lineItem/UsageAccountId':'VARCHAR',
-  'lineItem/LineItemType':'VARCHAR',
-  'lineItem/UsageStartDate':'TIMESTAMP',
-  'lineItem/UsageEndDate':'TIMESTAMP',
-  'lineItem/ProductCode':'VARCHAR',
-  'lineItem/UsageType':'VARCHAR',
-  'lineItem/Operation':'VARCHAR',
-  'lineItem/AvailabilityZone':'VARCHAR',
-  'lineItem/ResourceId':'VARCHAR',
-  'lineItem/UsageAmount':'DOUBLE',
-  'lineItem/NormalizationFactor':'DOUBLE',
-  'lineItem/NormalizedUsageAmount':'DOUBLE',
-  'lineItem/CurrencyCode':'VARCHAR',
-  'lineItem/UnblendedRate':'VARCHAR',
-  'lineItem/UnblendedCost':'DOUBLE',
-  'lineItem/BlendedRate':'VARCHAR',
-  'lineItem/BlendedCost':'DOUBLE',
-  'lineItem/LineItemDescription':'VARCHAR',
-  'lineItem/TaxType':'VARCHAR',
-  'lineItem/LegalEntity':'VARCHAR',
-  'product/ProductName':'VARCHAR',
-  'product/availability':'VARCHAR',
-  'product/databaseEngine':'VARCHAR',
-  'product/deploymentOption':'VARCHAR',
-  'product/description':'VARCHAR',
-  'product/durability':'VARCHAR',
-  'product/feeCode':'VARCHAR',
-  'product/feeDescription':'VARCHAR',
-  'product/fromLocation':'VARCHAR',
-  'product/fromLocationType':'VARCHAR',
-  'product/fromRegionCode':'VARCHAR',
-  'product/group':'VARCHAR',
-  'product/groupDescription':'VARCHAR',
-  'product/instanceFamily':'VARCHAR',
-  'product/instanceType':'VARCHAR',
-  'product/instanceTypeFamily':'VARCHAR',
-  'product/licenseModel':'VARCHAR',
-  'product/location':'VARCHAR',
-  'product/locationType':'VARCHAR',
-  'product/normalizationSizeFactor':'VARCHAR',
-  'product/operatingSystem':'VARCHAR',
-  'product/operation':'VARCHAR',
-  'product/productFamily':'VARCHAR',
-  'product/region':'VARCHAR',
-  'product/regionCode':'VARCHAR',
-  'product/servicecode':'VARCHAR',
-  'product/servicename':'VARCHAR',
-  'product/sku':'VARCHAR',
-  'product/storageClass':'VARCHAR',
-  'product/tenancy':'VARCHAR',
-  'product/toLocation':'VARCHAR',
-  'product/toLocationType':'VARCHAR',
-  'product/toRegionCode':'VARCHAR',
-  'product/transferType':'VARCHAR',
-  'product/usagetype':'VARCHAR',
-  'product/version':'VARCHAR',
-  'product/volumeType':'VARCHAR',
-  'pricing/RateCode':'VARCHAR',
-  'pricing/RateId':'VARCHAR',
-  'pricing/currency':'VARCHAR',
-  'pricing/publicOnDemandCost':'DOUBLE',
-  'pricing/publicOnDemandRate':'VARCHAR',
-  'pricing/term':'VARCHAR',
-  'pricing/unit':'VARCHAR',
-  'reservation/AmortizedUpfrontCostForUsage':'DOUBLE',
-  'reservation/AmortizedUpfrontFeeForBillingPeriod':'DOUBLE',
-  'reservation/EffectiveCost':'DOUBLE',
-  'reservation/EndTime':'VARCHAR',
-  'reservation/ModificationStatus':'VARCHAR',
-  'reservation/RecurringFeeForUsage':'DOUBLE',
-  'reservation/StartTime':'VARCHAR',
-  'reservation/SubscriptionId':'VARCHAR',
-  'reservation/TotalReservedNormalizedUnits':'VARCHAR',
-  'reservation/TotalReservedUnits':'VARCHAR',
-  'reservation/UnitsPerReservation':'VARCHAR',
-  'reservation/UnusedAmortizedUpfrontFeeForBillingPeriod':'DOUBLE',
-  'reservation/UnusedNormalizedUnitQuantity':'DOUBLE',
-  'reservation/UnusedQuantity':'DOUBLE',
-  'reservation/UnusedRecurringFee':'DOUBLE',
-  'reservation/UpfrontValue':'DOUBLE',
-  'savingsPlan/TotalCommitmentToDate':'DOUBLE',
-  'savingsPlan/SavingsPlanARN':'VARCHAR',
-  'savingsPlan/SavingsPlanRate':'DOUBLE',
-  'savingsPlan/UsedCommitment':'DOUBLE',
-  'savingsPlan/SavingsPlanEffectiveCost':'DOUBLE',
-  'savingsPlan/AmortizedUpfrontCommitmentForBillingPeriod':'DOUBLE',
-  'savingsPlan/RecurringCommitmentForBillingPeriod':'DOUBLE',
-  'tags':'VARCHAR',
-  'costcategories':'VARCHAR'
-});`,
-		`q:DESCRIBE tmpcur;`,
-		`q:SELECT uuid, date, payer FROM tmpcur;`,
+	args := os.Args
+	_ = args
+	if len(args) < 2 {
+		slog.Info("missing argument")
+		return
 	}
 
-	for _, payload := range payloads {
+	slog.Info("connecting:", "addr", addr)
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		slog.Error("Dial failed:", "err", err)
+		return
+	}
+
+	defer conn.Close()
+	slog.Info("connected")
+
+	payload := fmt.Sprintf("%s%d\r\n%s%s\r\n", *flagPrefix, len(args[1])+len(*flagType), *flagType, args[1])
+	slog.Info("send:", "payload", payload)
+
+	_, err = conn.Write([]byte(payload))
+	if err != nil {
+		slog.Error("Write failed:", "err", err)
+		return
+	}
+
+	r, err := ipc.NewReader(conn)
+	if err != nil {
+		slog.Error("NewReader failed:", "err", err)
+		return
+	}
+
+	defer r.Release()
+	slog.Info("schema received:")
+	fmt.Println(r.Schema())
+
+	var cnt int
+	for r.Next() {
 		func() {
-			log.Printf("Go Arrow client connecting to %s", addr)
-			conn, err := net.Dial("tcp", addr)
-			if err != nil {
-				log.Fatalf("Failed to connect to server: %v", err)
-			}
+			rec := r.RecordBatch()
+			defer rec.Release()
 
-			defer conn.Close()
-			log.Println("Successfully connected.")
-
-			fpayload := fmt.Sprintf("$%d\r\n%s\r\n", len(payload), payload)
-			_, err = conn.Write([]byte(fpayload))
-			if err != nil {
-				log.Fatalf("Failed to send greeting: %v", err)
-			}
-
-			r, err := ipc.NewReader(conn)
-			if err != nil {
-				log.Printf("Failed to create Arrow reader: %v", err)
-				return
-			}
-
-			defer r.Release()
-			log.Println("Received schema:", r.Schema())
-
-			var recordCount int
-			for r.Next() {
-				func() {
-					rec := r.RecordBatch()
-					defer rec.Release()
-
-					recordCount++
-					log.Printf("--- Reading Record Batch #%d ---", recordCount)
-					log.Printf("Rows: %d, Columns: %d", rec.NumRows(), rec.NumCols())
-					fmt.Println(rec)
-				}()
-			}
-
-			if err := r.Err(); err != nil && err != io.EOF {
-				log.Fatalf("Error reading records: %v", err)
-			}
-
-			log.Printf("Finished reading %d record batches from stream.", recordCount)
+			slog.Info(fmt.Sprintf("Reading RecordBatch[%d]", cnt))
+			slog.Info("table:", "rows", rec.NumRows(), "cols", rec.NumCols())
+			fmt.Println(rec)
+			cnt++
 		}()
 	}
+
+	if err := r.Err(); err != nil && err != io.EOF {
+		slog.Error("Read failed:", "err", err)
+		return
+	}
+
+	slog.Info("finished:", "recordCount", cnt)
 }
