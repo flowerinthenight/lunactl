@@ -67,15 +67,12 @@ func main() {
 
 		var cnt int
 		for rdr.Next() {
-			func() {
-				rec := rdr.RecordBatch()
-				defer rec.Release()
-
-				slog.Info(fmt.Sprintf("Reading RecordBatch[%d]", cnt))
-				slog.Info("table:", "rows", rec.NumRows(), "cols", rec.NumCols())
-				fmt.Println(rec)
-				cnt++
-			}()
+			rec := rdr.RecordBatch()
+			slog.Info(fmt.Sprintf("Reading RecordBatch[%d]", cnt))
+			slog.Info("table:", "rows", rec.NumRows(), "cols", rec.NumCols())
+			fmt.Println(rec)
+			rec.Release()
+			cnt++
 		}
 
 		if err := rdr.Err(); err != nil && err != io.EOF {
