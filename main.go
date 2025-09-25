@@ -13,7 +13,8 @@ import (
 var (
 	flagAddr    = flag.String("addr", "127.0.0.1:7688", "Luna's host:port")
 	flagPrefix  = flag.String("prefix", "$", "Request prefix")
-	flagType    = flag.String("type", "q:", "Command type")
+	flagExec    = flag.Bool("x", false, "Execute command type")
+	flagQuery   = flag.Bool("q", false, "Query command type (higher priority than -x)")
 	flagPayload = flag.String("p", "SHOW tables;", "Main payload")
 	flagPass    = flag.String("pass", "", "Password (when AUTH is required)")
 )
@@ -40,10 +41,19 @@ func main() {
 		payloads = append(payloads, fmt.Sprintf("AUTH %s\r\n", *flagPass))
 	}
 
+	cmdType := "q:" // default
+	if *flagExec {
+		cmdType = "x:"
+	}
+
+	if *flagQuery {
+		cmdType = "q:"
+	}
+
 	payloads = append(payloads, fmt.Sprintf("%s%d\r\n%s%s\r\n",
 		*flagPrefix,
-		len(*flagPayload)+len(*flagType),
-		*flagType,
+		len(*flagPayload)+len(cmdType),
+		cmdType,
 		*flagPayload),
 	)
 
