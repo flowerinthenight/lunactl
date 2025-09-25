@@ -1,6 +1,6 @@
 [![main](https://github.com/flowerinthenight/lunactl/actions/workflows/main.yml/badge.svg)](https://github.com/flowerinthenight/lunactl/actions/workflows/main.yml)
 
-Test cmdline for [luna](https://github.com/flowerinthenight/luna/).
+Test cmdline for [Luna](https://github.com/flowerinthenight/luna/).
 
 Install via Homebrew:
 
